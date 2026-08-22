@@ -11,7 +11,7 @@
     "name": "rolldown-runtime"
   },
   "app/scroll-story.tsx": {
-    "file": "assets/scroll-story-C4GfX_gt.js",
+    "file": "assets/scroll-story-DTme-xLL.js",
     "name": "scroll-story",
     "src": "app/scroll-story.tsx",
     "isDynamicEntry": true,
@@ -23,7 +23,8 @@
     "dynamicImports": [
       "node_modules/three/build/three.module.js",
       "node_modules/three/examples/jsm/loaders/GLTFLoader.js",
-      "node_modules/three/examples/jsm/environments/RoomEnvironment.js"
+      "node_modules/three/examples/jsm/environments/RoomEnvironment.js",
+      "node_modules/three/examples/jsm/libs/meshopt_decoder.module.js"
     ]
   },
   "node_modules/three/build/three.module.js": {
@@ -41,8 +42,14 @@
       "node_modules/three/build/three.module.js"
     ]
   },
+  "node_modules/three/examples/jsm/libs/meshopt_decoder.module.js": {
+    "file": "assets/meshopt_decoder.module-BWTYGNTR.js",
+    "name": "meshopt_decoder.module",
+    "src": "node_modules/three/examples/jsm/libs/meshopt_decoder.module.js",
+    "isDynamicEntry": true
+  },
   "node_modules/three/examples/jsm/loaders/GLTFLoader.js": {
-    "file": "assets/GLTFLoader-C0yWHf_a.js",
+    "file": "assets/GLTFLoader-BnAyv5Pi.js",
     "name": "GLTFLoader",
     "src": "node_modules/three/examples/jsm/loaders/GLTFLoader.js",
     "isDynamicEntry": true,
@@ -51,7 +58,7 @@
     ]
   },
   "node_modules/vinext/dist/shims/layout-segment-context.js": {
-    "file": "assets/layout-segment-context-DsAl69Te.js",
+    "file": "assets/layout-segment-context-01UKEoTA.js",
     "name": "layout-segment-context",
     "src": "node_modules/vinext/dist/shims/layout-segment-context.js",
     "isDynamicEntry": true,
@@ -62,7 +69,7 @@
     ]
   },
   "virtual:vinext-app-browser-entry": {
-    "file": "assets/index-BPKuxlYs.js",
+    "file": "assets/index-WDo9XCjC.js",
     "name": "index",
     "src": "virtual:vinext-app-browser-entry",
     "isEntry": true,
