@@ -11,17 +11,47 @@
     "name": "rolldown-runtime"
   },
   "app/scroll-story.tsx": {
-    "file": "assets/scroll-story-Be3BIDA3.js",
+    "file": "assets/scroll-story-EH6tUoXr.js",
     "name": "scroll-story",
     "src": "app/scroll-story.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-S-ySWqyJ.js",
+      "virtual:vinext-app-browser-entry",
       "_framework-CXnKph_e.js"
+    ],
+    "dynamicImports": [
+      "node_modules/three/build/three.module.js",
+      "node_modules/three/examples/jsm/loaders/GLTFLoader.js",
+      "node_modules/three/examples/jsm/environments/RoomEnvironment.js"
+    ]
+  },
+  "node_modules/three/build/three.module.js": {
+    "file": "assets/three.module-BK9IqGvd.js",
+    "name": "three.module",
+    "src": "node_modules/three/build/three.module.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/three/examples/jsm/environments/RoomEnvironment.js": {
+    "file": "assets/RoomEnvironment-tAl5LaM8.js",
+    "name": "RoomEnvironment",
+    "src": "node_modules/three/examples/jsm/environments/RoomEnvironment.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "node_modules/three/build/three.module.js"
+    ]
+  },
+  "node_modules/three/examples/jsm/loaders/GLTFLoader.js": {
+    "file": "assets/GLTFLoader-C0yWHf_a.js",
+    "name": "GLTFLoader",
+    "src": "node_modules/three/examples/jsm/loaders/GLTFLoader.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "node_modules/three/build/three.module.js"
     ]
   },
   "node_modules/vinext/dist/shims/layout-segment-context.js": {
-    "file": "assets/layout-segment-context-BB-wNKHR.js",
+    "file": "assets/layout-segment-context-HSwC25dN.js",
     "name": "layout-segment-context",
     "src": "node_modules/vinext/dist/shims/layout-segment-context.js",
     "isDynamicEntry": true,
@@ -32,7 +62,7 @@
     ]
   },
   "virtual:vinext-app-browser-entry": {
-    "file": "assets/index-D9gdsu7k.js",
+    "file": "assets/index-BTtotYUs.js",
     "name": "index",
     "src": "virtual:vinext-app-browser-entry",
     "isEntry": true,
