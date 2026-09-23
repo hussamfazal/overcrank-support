@@ -10,18 +10,8 @@
     "file": "assets/rolldown-runtime-S-ySWqyJ.js",
     "name": "rolldown-runtime"
   },
-  "app/demo-video.tsx": {
-    "file": "assets/demo-video-C6fwSDmu.js",
-    "name": "demo-video",
-    "src": "app/demo-video.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "_rolldown-runtime-S-ySWqyJ.js",
-      "_framework-CXnKph_e.js"
-    ]
-  },
   "app/scroll-story.tsx": {
-    "file": "assets/scroll-story-j5h7IEzh.js",
+    "file": "assets/scroll-story-2CpLEmKu.js",
     "name": "scroll-story",
     "src": "app/scroll-story.tsx",
     "isDynamicEntry": true,
@@ -38,13 +28,13 @@
     ]
   },
   "node_modules/three/build/three.module.js": {
-    "file": "assets/three.module-Btlnq4uP.js",
+    "file": "assets/three.module-BK9IqGvd.js",
     "name": "three.module",
     "src": "node_modules/three/build/three.module.js",
     "isDynamicEntry": true
   },
   "node_modules/three/examples/jsm/environments/RoomEnvironment.js": {
-    "file": "assets/RoomEnvironment-DWSc9GfH.js",
+    "file": "assets/RoomEnvironment-tAl5LaM8.js",
     "name": "RoomEnvironment",
     "src": "node_modules/three/examples/jsm/environments/RoomEnvironment.js",
     "isDynamicEntry": true,
@@ -53,13 +43,13 @@
     ]
   },
   "node_modules/three/examples/jsm/libs/meshopt_decoder.module.js": {
-    "file": "assets/meshopt_decoder.module-CUjRHnST.js",
+    "file": "assets/meshopt_decoder.module-BWTYGNTR.js",
     "name": "meshopt_decoder.module",
     "src": "node_modules/three/examples/jsm/libs/meshopt_decoder.module.js",
     "isDynamicEntry": true
   },
   "node_modules/three/examples/jsm/loaders/GLTFLoader.js": {
-    "file": "assets/GLTFLoader-DAbxXeiY.js",
+    "file": "assets/GLTFLoader-BnAyv5Pi.js",
     "name": "GLTFLoader",
     "src": "node_modules/three/examples/jsm/loaders/GLTFLoader.js",
     "isDynamicEntry": true,
@@ -68,7 +58,7 @@
     ]
   },
   "node_modules/vinext/dist/shims/layout-segment-context.js": {
-    "file": "assets/layout-segment-context-CCauavQP.js",
+    "file": "assets/layout-segment-context-BhqhW5xu.js",
     "name": "layout-segment-context",
     "src": "node_modules/vinext/dist/shims/layout-segment-context.js",
     "isDynamicEntry": true,
@@ -79,7 +69,7 @@
     ]
   },
   "virtual:vinext-app-browser-entry": {
-    "file": "assets/index-BA06K7Gd.js",
+    "file": "assets/index-CkNbpTYY.js",
     "name": "index",
     "src": "virtual:vinext-app-browser-entry",
     "isEntry": true,
@@ -90,7 +80,6 @@
     "dynamicImports": [
       "node_modules/vinext/dist/shims/layout-segment-context.js",
       "virtual:vinext-app-browser-entry",
-      "app/demo-video.tsx",
       "app/scroll-story.tsx"
     ]
   }
