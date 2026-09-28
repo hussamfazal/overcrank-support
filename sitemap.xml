@@ -6,7 +6,7 @@
   </url>
   <url>
     <loc>https://overcrank.ca/guides/</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-09-28</lastmod>
   </url>
   <url>
     <loc>https://overcrank.ca/guides/control-gopro-with-apple-watch/</loc>
@@ -46,5 +46,16 @@
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-120fps-shutter.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-fixed-shutter-ev.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-4k-4-3-frame-rate.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://overcrank.ca/guides/gopro-remote-options/</loc>
+    <lastmod>2026-09-28</lastmod>
+    <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-recording.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://overcrank.ca/guides/apple-watch-camera-remote-gopro/</loc>
+    <lastmod>2026-09-28</lastmod>
+    <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-rec-screen.webp</image:loc></image:image>
+    <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-status.webp</image:loc></image:image>
   </url>
 </urlset>

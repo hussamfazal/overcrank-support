@@ -1,5 +1,5 @@
 const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/GLTFLoader-BcXlZFFf.js","assets/three.module-8EqET592.js","assets/RoomEnvironment-CVhSn3f4.js"])))=>i.map(i=>d[i]);
-import{r as e}from"./rolldown-runtime-S-ySWqyJ.js";import{i as t,r as n}from"./framework-CXnKph_e.js";import{t as r}from"./index-DHqKJ6ut.js";var i=e(t(),1),a=n(),o=`overcrank`,s=`${o}/watch/watch-ultra-web.glb`,c=`${o}/watch/01-control.png`,l=`UlFjqascpPnJnyb`,u=.6102,d=-.38;function f(e){return new Promise((t,n)=>{let r=new Image;r.decoding=`async`,r.onload=()=>t(r),r.onerror=()=>n(Error(`Unable to load ${e}`)),r.src=e})}function p(){let e=`
+import{r as e}from"./rolldown-runtime-S-ySWqyJ.js";import{i as t,r as n}from"./framework-CXnKph_e.js";import{t as r}from"./index-DvVQzo9g.js";var i=e(t(),1),a=n(),o=`overcrank`,s=`${o}/watch/watch-ultra-web.glb`,c=`${o}/watch/01-control.png`,l=`UlFjqascpPnJnyb`,u=.6102,d=-.38;function f(e){return new Promise((t,n)=>{let r=new Image;r.decoding=`async`,r.onload=()=>t(r),r.onerror=()=>n(Error(`Unable to load ${e}`)),r.src=e})}function p(){let e=`
     M 379 289 C 242 289 162 368 162 500
     C 162 636 235 711 374 711 L 454 711
     C 591 711 670 633 670 500
