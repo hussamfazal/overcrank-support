@@ -1,6 +1,6 @@
 {
-  "_framework-CXnKph_e.js": {
-    "file": "assets/framework-CXnKph_e.js",
+  "_framework-DjPHiq1u.js": {
+    "file": "assets/framework-DjPHiq1u.js",
     "name": "framework",
     "imports": [
       "_rolldown-runtime-S-ySWqyJ.js"
@@ -11,93 +11,80 @@
     "name": "rolldown-runtime"
   },
   "app/demo-video.tsx": {
-    "file": "assets/demo-video-C6fwSDmu.js",
+    "file": "assets/demo-video-B1zFfwNa.js",
     "name": "demo-video",
     "src": "app/demo-video.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-S-ySWqyJ.js",
-      "_framework-CXnKph_e.js"
+      "_framework-DjPHiq1u.js"
+    ]
+  },
+  "app/demo/engine.js": {
+    "file": "assets/engine-DpKIOijD.js",
+    "name": "engine",
+    "src": "app/demo/engine.js",
+    "isDynamicEntry": true
+  },
+  "app/demo/interactive-demo.tsx": {
+    "file": "assets/interactive-demo-CQB-V7vz.js",
+    "name": "interactive-demo",
+    "src": "app/demo/interactive-demo.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-S-ySWqyJ.js",
+      "virtual:vinext-app-browser-entry",
+      "_framework-DjPHiq1u.js"
+    ],
+    "dynamicImports": [
+      "app/demo/engine.js"
+    ],
+    "css": [
+      "assets/interactive-demo-By5aSV84.css"
     ]
   },
   "app/guides/loop-clip.tsx": {
-    "file": "assets/loop-clip-CwwvB5H-.js",
+    "file": "assets/loop-clip-_odfvkCt.js",
     "name": "loop-clip",
     "src": "app/guides/loop-clip.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-S-ySWqyJ.js",
-      "_framework-CXnKph_e.js"
+      "_framework-DjPHiq1u.js"
     ]
   },
   "app/scroll-story.tsx": {
-    "file": "assets/scroll-story-DTCB-bZ_.js",
+    "file": "assets/scroll-story-Cpo0wBF_.js",
     "name": "scroll-story",
     "src": "app/scroll-story.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-S-ySWqyJ.js",
-      "virtual:vinext-app-browser-entry",
-      "_framework-CXnKph_e.js"
-    ],
-    "dynamicImports": [
-      "node_modules/three/build/three.module.js",
-      "node_modules/three/examples/jsm/loaders/GLTFLoader.js",
-      "node_modules/three/examples/jsm/environments/RoomEnvironment.js",
-      "node_modules/three/examples/jsm/libs/meshopt_decoder.module.js"
-    ]
-  },
-  "node_modules/three/build/three.module.js": {
-    "file": "assets/three.module-8EqET592.js",
-    "name": "three.module",
-    "src": "node_modules/three/build/three.module.js",
-    "isDynamicEntry": true
-  },
-  "node_modules/three/examples/jsm/environments/RoomEnvironment.js": {
-    "file": "assets/RoomEnvironment-CVhSn3f4.js",
-    "name": "RoomEnvironment",
-    "src": "node_modules/three/examples/jsm/environments/RoomEnvironment.js",
-    "isDynamicEntry": true,
-    "imports": [
-      "node_modules/three/build/three.module.js"
-    ]
-  },
-  "node_modules/three/examples/jsm/libs/meshopt_decoder.module.js": {
-    "file": "assets/meshopt_decoder.module-BrYtN6rS.js",
-    "name": "meshopt_decoder.module",
-    "src": "node_modules/three/examples/jsm/libs/meshopt_decoder.module.js",
-    "isDynamicEntry": true
-  },
-  "node_modules/three/examples/jsm/loaders/GLTFLoader.js": {
-    "file": "assets/GLTFLoader-BcXlZFFf.js",
-    "name": "GLTFLoader",
-    "src": "node_modules/three/examples/jsm/loaders/GLTFLoader.js",
-    "isDynamicEntry": true,
-    "imports": [
-      "node_modules/three/build/three.module.js"
+      "_framework-DjPHiq1u.js"
     ]
   },
   "node_modules/vinext/dist/shims/layout-segment-context.js": {
-    "file": "assets/layout-segment-context-3cIQdKaD.js",
+    "file": "assets/layout-segment-context-CYBGor7z.js",
     "name": "layout-segment-context",
     "src": "node_modules/vinext/dist/shims/layout-segment-context.js",
     "isDynamicEntry": true,
     "imports": [
       "_rolldown-runtime-S-ySWqyJ.js",
       "virtual:vinext-app-browser-entry",
-      "_framework-CXnKph_e.js"
+      "_framework-DjPHiq1u.js"
     ]
   },
   "virtual:vinext-app-browser-entry": {
-    "file": "assets/index-DvVQzo9g.js",
+    "file": "assets/index-_VtdrJpe.js",
     "name": "index",
     "src": "virtual:vinext-app-browser-entry",
     "isEntry": true,
     "imports": [
       "_rolldown-runtime-S-ySWqyJ.js",
-      "_framework-CXnKph_e.js"
+      "_framework-DjPHiq1u.js"
     ],
     "dynamicImports": [
+      "app/demo/interactive-demo.tsx",
       "app/guides/loop-clip.tsx",
       "node_modules/vinext/dist/shims/layout-segment-context.js",
       "virtual:vinext-app-browser-entry",
