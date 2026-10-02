@@ -1,0 +1,1555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Try Overcrank: Tap the Watch, the Camera Answers</title>
+<link rel="canonical" href="https://overcrank.ca/demo/">
+<meta name="description" content="Try Overcrank in your browser: tap a 3D Apple Watch and a GoPro MISSION 1 Pro responds. Record, switch modes and change settings. No camera needed.">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,500,1,0&display=block">
+<link rel="preload" href="/overcrank/watch/watch-ultra-web.glb" as="fetch" type="model/gltf-binary" crossorigin>
+<link rel="preload" href="assets/mission-1-pro.glb" as="fetch" type="model/gltf-binary" crossorigin>
+<style>
+  @font-face { font-family: "Geist"; src: url("/fonts/Geist-Latin.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+  @font-face { font-family: "Michroma"; src: url("/fonts/Michroma-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+
+  :root {
+    --ink: #000;
+    --stage: #050607;
+    --white: #f5f5f7;
+    --muted: #86868b;
+    --line: rgba(255, 255, 255, 0.12);
+    --blue: #00a8ef;
+    --gopro-blue: #0088ff;
+    --orange: #ff3b0a;
+    --red: #ff3344;
+    --ok: #00cc66;
+    --amber: #ffb020;
+    --page-x: max(20px, calc(50vw - 600px));
+  }
+
+  * { box-sizing: border-box; }
+  html { background: var(--ink); color-scheme: dark; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--white);
+    font-family: "Geist", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  /* ---------- header ---------- */
+  .site-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 18px var(--page-x);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--white); text-decoration: none; font-family: "Michroma", sans-serif; font-size: 15px; letter-spacing: 0.08em; }
+  .brand img { width: 38px; height: auto; }
+  .mock-pill {
+    text-decoration: none;
+    font-size: 12px; letter-spacing: 0.04em; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; white-space: nowrap;
+  }
+
+  /* ---------- demo section ---------- */
+  .demo {
+    position: relative; padding: 28px var(--page-x) 40px; isolation: isolate;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 48px;
+    grid-template-areas: "head tasks" "stage stage" "finish finish";
+  }
+  .demo-head { grid-area: head; }
+  .tasks-panel { grid-area: tasks; align-self: end; }
+  .stage { grid-area: stage; }
+  .finish { grid-area: finish; }
+  .demo::before {
+    /* Studio light: one soft key from above, a cool spill on the watch side,
+       a warm one on the camera side. No texture, no grid. */
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(42% 46% at 27% 56%, rgba(0, 136, 255, 0.13), transparent 72%),
+      radial-gradient(40% 44% at 76% 56%, rgba(255, 92, 40, 0.07), transparent 72%),
+      radial-gradient(70% 50% at 50% 0%, rgba(255, 255, 255, 0.05), transparent 70%),
+      linear-gradient(180deg, #000 0%, var(--stage) 40%, #000 100%);
+  }
+
+  .demo-head { max-width: 760px; }
+  .kicker { margin: 0 0 14px; font-size: 13px; letter-spacing: 0.18em; color: var(--blue); font-weight: 600; }
+  h1 {
+    margin: 0; font-size: clamp(34px, 4.4vw, 58px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 650;
+    text-wrap: balance;
+  }
+  h1 span { color: #6e6e73; }
+  .lede { margin: 14px 0 0; max-width: 560px; font-size: clamp(16px, 1.6vw, 19px); line-height: 1.5; color: var(--muted); text-wrap: pretty; }
+  .lede strong { color: var(--white); font-weight: 550; }
+
+  /* ---------- stage ---------- */
+  .stage {
+    margin-top: 8px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 200px minmax(0, 1fr);
+    align-items: stretch;
+    height: clamp(480px, calc(100svh - 300px), 720px);
+  }
+
+  .device { position: relative; margin: 0; display: grid; grid-template-rows: 1fr auto; min-width: 0; }
+  .canvas-host { position: relative; min-height: 0; }
+  .pip-swap { display: none; }
+  .canvas-host canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+    touch-action: pan-y; cursor: grab; opacity: 0; transition: opacity 700ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .canvas-host canvas.is-ready { opacity: 1; }
+  .canvas-host canvas.dragging { cursor: grabbing; }
+  .canvas-host canvas.over-control { cursor: pointer; }
+  .canvas-host::after {
+    /* Contact shadow the model sits on. */
+    content: ""; position: absolute; left: 22%; right: 22%; bottom: 4%; height: 22px; z-index: -1;
+    background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, 0.9), transparent 70%);
+    filter: blur(6px);
+  }
+  .loading {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    color: var(--muted); font-size: 13px; letter-spacing: 0.04em; transition: opacity 400ms ease;
+  }
+  .loading.is-hidden { opacity: 0; pointer-events: none; }
+  .loading::before {
+    content: ""; width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.12); border-top-color: var(--blue);
+    animation: spin 900ms linear infinite; margin-bottom: 44px; grid-area: 1 / 1;
+  }
+  .loading span { grid-area: 1 / 1; margin-top: 30px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  figcaption { text-align: center; padding-top: 8px; display: grid; gap: 4px; }
+  figcaption strong { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  figcaption span { font-size: 13px; color: var(--muted); }
+
+  .flip-btn {
+    margin-left: 8px; vertical-align: 1px;
+    font: inherit; font-size: 12px; font-weight: 500; color: var(--white);
+    background: rgba(255,255,255,0.06); border: 1px solid var(--line); border-radius: 999px;
+    padding: 4px 11px; cursor: pointer; transition: background 160ms ease;
+  }
+  .flip-btn:hover { background: rgba(255,255,255,0.12); }
+  .flip-btn:focus-visible, .task-reset:focus-visible, .cta:focus-visible, .kbd-controls button:focus-visible {
+    outline: 2px solid var(--blue); outline-offset: 3px;
+  }
+
+  /* ---------- link between devices ---------- */
+  .link { display: grid; align-content: center; justify-items: center; gap: 12px; padding-bottom: 54px; }
+  .link-track { position: relative; width: 100%; height: 2px; margin: 26px 0 20px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18) 14%, rgba(255,255,255,0.18) 86%, transparent); }
+  .link-node { position: absolute; top: 50%; width: 7px; height: 7px; margin-top: -3.5px; border-radius: 50%; background: rgba(255,255,255,0.35); }
+  .link-node.l { left: 6%; }
+  .link-node.r { right: 6%; }
+  /* The radio between the two devices: a Bluetooth hub on the line that
+     breathes while connected and flares as each command passes through. */
+  .link-badge {
+    position: absolute; left: 50%; top: 50%; z-index: 1; width: 46px; height: 46px; margin: -23px 0 0 -23px;
+    display: grid; place-items: center; border-radius: 50%; background: #0a1420;
+    border: 1px solid rgba(0, 136, 255, 0.45);
+    box-shadow: 0 0 0 6px rgba(0, 136, 255, 0.06), 0 0 24px rgba(0, 136, 255, 0.22);
+  }
+  .link-badge .material { font-size: 22px; color: var(--blue); }
+  .link-badge::after {
+    content: ""; position: absolute; inset: -1px; border-radius: 50%; border: 1px solid rgba(0, 136, 255, 0.5);
+    animation: link-ripple 2.8s ease-out infinite;
+  }
+  .link-badge.hit { animation: link-hit 340ms ease-out; }
+  @keyframes link-ripple { from { transform: scale(1); opacity: 0.7; } to { transform: scale(2.1); opacity: 0; } }
+  @keyframes link-hit {
+    40% { box-shadow: 0 0 0 10px rgba(0, 136, 255, 0.18), 0 0 44px rgba(0, 136, 255, 0.75); }
+  }
+  @media (prefers-reduced-motion: reduce) { .link-badge::after { animation: none; opacity: 0; } }
+  .pulse {
+    position: absolute; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%;
+    background: var(--gopro-blue); box-shadow: 0 0 12px 3px rgba(0, 136, 255, 0.7);
+  }
+  .pulse.c2w { background: var(--white); box-shadow: 0 0 10px 2px rgba(255,255,255,0.5); }
+  .pulse.w2c { animation: w2c 240ms cubic-bezier(.4,0,.2,1) forwards; }
+  .pulse.c2w { animation: c2w 240ms cubic-bezier(.4,0,.2,1) forwards; }
+  @keyframes w2c { from { left: 0%; opacity: 0.2; } 30% { opacity: 1; } to { left: 100%; opacity: 1; } }
+  @keyframes c2w { from { left: 100%; opacity: 0.2; } 30% { opacity: 1; } to { left: 0%; opacity: 1; } }
+  .link-meta { font-size: 12px; letter-spacing: 0.04em; color: var(--muted); text-align: center; white-space: nowrap; }
+  /* The last command, as a small card: direction, what, round trip. */
+  .link-log {
+    width: 100%; min-height: 78px; display: grid; align-content: center; justify-items: center; gap: 3px;
+    padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,0.03);
+    text-align: center; font-size: 13px; line-height: 1.35; color: var(--muted); font-variant-numeric: tabular-nums;
+  }
+  .link-log .route { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .link-log b { display: block; color: var(--white); font-weight: 550; font-size: 14px; }
+  .link-log em { font-style: normal; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--blue); }
+  .link-log.fresh { animation: link-fresh 260ms ease-out; }
+  @keyframes link-fresh { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  .material {
+    font-family: "Material Symbols Rounded"; font-weight: normal; font-style: normal; line-height: 1;
+    letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; direction: ltr;
+    -webkit-font-feature-settings: "liga"; font-feature-settings: "liga";
+  }
+
+  /* ---------- tasks ---------- */
+  .tasks-panel { display: grid; gap: 10px; justify-items: start; min-width: 240px; }
+  .tasks-top { display: flex; align-items: baseline; justify-content: space-between; width: 100%; gap: 12px; }
+  .tasks-label { font-size: 13px; color: var(--muted); letter-spacing: 0.02em; }
+  /* A numbered stepper: one rail through the badges, only the current step
+     carded, finished steps go quiet behind a green check. */
+  .tasks-progress { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 100%; margin: -4px 0 4px; }
+  .tasks-progress i { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.1); transition: background 300ms ease; }
+  .tasks-progress i.on { background: var(--ok); }
+  .tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; width: 100%; position: relative; counter-reset: step; }
+  .tasks::before { content: ""; position: absolute; left: 22px; top: 22px; bottom: 22px; width: 1.5px; background: rgba(255,255,255,0.1); }
+  .tasks li {
+    position: relative; counter-increment: step;
+    display: flex; align-items: center; gap: 12px; font-size: 14px; padding: 9px 14px 9px 10px;
+    border-radius: 14px; border: 1px solid transparent; color: var(--muted); background: none;
+    transition: border-color 240ms ease, background 240ms ease, color 240ms ease;
+  }
+  .tasks li .tick {
+    flex: none; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.22);
+    background: var(--ink); display: grid; place-items: center; font-size: 0; color: transparent; transition: all 240ms ease;
+  }
+  .tasks li:not(.done) .tick::after { content: counter(step); grid-area: 1 / 1; font: 600 12px/1 -apple-system, "SF Pro Text", "Inter", sans-serif; color: var(--muted); }
+  .task-text { display: grid; gap: 2px; }
+  .task-text small { display: none; font-size: 12px; color: var(--blue); }
+  .tasks li.next { border-color: rgba(0, 136, 255, 0.45); background: rgba(0, 136, 255, 0.08); color: var(--white); }
+  .tasks li.next .tick { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(0, 136, 255, 0.15); }
+  .tasks li.next .tick::after { color: var(--blue); }
+  .tasks li.next .task-text small { display: block; }
+  .tasks li.done { color: #8e8e93; }
+  .tasks li.done .tick { background: var(--ok); border-color: var(--ok); color: #000; font-size: 15px; font-weight: 700; }
+  .task-reset {
+    font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 8px 6px;
+    text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(255,255,255,0.25);
+  }
+  .task-reset:hover { color: var(--white); }
+
+  .finish {
+    margin: 18px auto 0; max-width: 560px; text-align: center; display: none;
+    padding: 18px 20px; border-radius: 18px; border: 1px solid rgba(0, 168, 239, 0.35); background: rgba(0, 168, 239, 0.07);
+  }
+  .finish.is-shown { display: block; animation: rise 420ms cubic-bezier(.2,.8,.2,1); }
+  .finish p { margin: 0 0 12px; font-size: 16px; }
+  .cta {
+    display: inline-flex; align-items: center; gap: 8px; color: #000; background: var(--white); text-decoration: none;
+    font-weight: 600; font-size: 15px; padding: 11px 20px; border-radius: 999px;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .kbd-controls { position: absolute; left: var(--page-x); top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .kbd-controls button {
+    position: absolute; opacity: 0; pointer-events: none; font: inherit; font-size: 13px;
+    padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: #111; color: var(--white);
+  }
+  .kbd-controls:focus-within button { position: static; opacity: 1; pointer-events: auto; }
+
+  /* ---------- how it works ---------- */
+  .how { padding: 56px var(--page-x) 72px; border-top: 1px solid var(--line); }
+  .how-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+  .how h2 { margin: 0 0 28px; font-size: clamp(24px, 2.6vw, 32px); letter-spacing: -0.02em; font-weight: 600; }
+  .how h3 { margin: 12px 0 8px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+  .how p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 15px; }
+  .how .material { font-size: 26px; color: var(--blue); }
+
+  .note { padding: 0 var(--page-x) 48px; color: #5c5c61; font-size: 12px; line-height: 1.5; }
+
+  /* ---------- phones ---------- */
+  @media (max-width: 760px) {
+    .demo { padding-top: 16px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "tasks" "stage" "finish"; }
+    /* Phones: only the current step, above the watch, so its hint stays in view. */
+    .tasks-panel { margin-top: 14px; }
+    .tasks::before, .tasks li:not(.next) { display: none; }
+    /* Phones: picture-in-picture. The device you're using fills the stage and
+       the other rides in the top corner, so cause and effect share a screen.
+       The corner button swaps them. */
+    .stage { display: flex; flex-direction: column; position: relative; height: auto; margin-top: 12px; padding-top: 104px; }
+    .stage > .device { order: 1; }
+    .stage > .link { order: 2; }
+    .stage .device .canvas-host { height: min(58svh, 460px); min-height: 320px; }
+    .stage:not(.swapped) .device-gopro, .stage.swapped .device-watch {
+      position: absolute; top: 0; right: 0; z-index: 2; display: block; width: 50%; height: 140px;
+      border-radius: 16px; border: 1px solid var(--line); background: rgba(16, 18, 22, 0.88); overflow: hidden;
+    }
+    .stage:not(.swapped) .device-gopro .canvas-host, .stage.swapped .device-watch .canvas-host { height: 100%; min-height: 0; pointer-events: none; }
+    .stage:not(.swapped) .device-gopro figcaption, .stage.swapped .device-watch figcaption { display: none; }
+    .pip-swap {
+      display: grid; place-items: end; position: absolute; top: 0; right: 0; z-index: 3; width: 50%; height: 140px;
+      padding: 8px; border: 0; border-radius: 16px; background: none; color: var(--white); cursor: pointer;
+    }
+    .pip-swap .material { font-size: 18px; padding: 4px; border-radius: 999px; background: rgba(0, 0, 0, 0.6); }
+    .pill-more { display: none; }
+    .lede { font-size: 15px; margin-top: 10px; }
+    .kicker { margin-bottom: 10px; }
+    /* The command card sits beside the corner device: tap, message, reaction in one row. */
+    .stage > .link { position: absolute; top: 0; left: 0; z-index: 2; width: calc(50% - 10px); height: 140px; padding: 0; gap: 0; display: block; }
+    .link-track, .link-meta { display: none; }
+    .link-log { height: 100%; min-height: 0; padding: 10px; }
+    .how-grid { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+    figcaption span { font-size: 12px; }
+    .mock-pill { font-size: 11px; padding: 5px 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pulse { display: none; }
+    .canvas-host canvas { transition: none; }
+    .finish.is-shown { animation: none; }
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="/" aria-label="Overcrank home">
+    <img src="/overcrank/logo-216.png" alt="" width="216" height="129">
+    <span>OVERCRANK</span>
+  </a>
+  <a class="mock-pill" href="https://apps.apple.com/app/id6793011580">Get the app<span class="pill-more"> on the App Store</span></a>
+</header>
+
+<main>
+  <section class="demo" aria-labelledby="demo-title">
+    <div class="kbd-controls" aria-label="Keyboard controls for the demo">
+      <button type="button" data-kbd="shutter">Record / stop</button>
+      <button type="button" data-kbd="mode">Next mode</button>
+      <button type="button" data-kbd="settings">Open settings</button>
+      <button type="button" data-kbd="power">Camera power</button>
+    </div>
+
+    <div class="demo-head">
+      <p class="kicker">TRY IT</p>
+      <h1 id="demo-title">Tap the watch.<br><span>The camera answers.</span></h1>
+      <p class="lede">Both devices here are interactive. <strong>Press record, switch modes, change a setting</strong> — the MISSION 1 Pro reacts the way it does from your wrist.</p>
+    </div>
+
+    <div class="tasks-panel">
+      <div class="tasks-top"><span class="tasks-label" id="tasksLabel">Try this · 0 of 4</span><button class="task-reset" type="button" id="resetBtn">Reset</button></div>
+      <div class="tasks-progress" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <ol class="tasks" aria-labelledby="tasksLabel">
+        <li data-task="rec"><span class="tick material" aria-hidden="true">check</span><span class="task-text">Start recording<small>Tap the red button on the watch</small></span></li>
+        <li data-task="slomo"><span class="tick material" aria-hidden="true">check</span><span class="task-text">Switch to Slo-Mo<small>Pick it in the watch's mode row</small></span></li>
+        <li data-task="setting"><span class="tick material" aria-hidden="true">check</span><span class="task-text">Change a setting<small>Tap the gear on the watch, then a value</small></span></li>
+        <li data-task="preset"><span class="tick material" aria-hidden="true">check</span><span class="task-text">Apply a preset<small>Tap the grid icon on the watch, then a preset</small></span></li>
+      </ol>
+    </div>
+
+    <div class="stage">
+      <figure class="device device-watch">
+        <div class="canvas-host" id="watchHost" role="application" aria-label="Interactive Apple Watch Ultra running Overcrank. Tap the screen to control the camera.">
+          <div class="loading" id="watchLoading"><span>Loading watch</span></div>
+        </div>
+        <figcaption><strong>Apple Watch Ultra</strong><span>Tap the screen · drag to turn</span></figcaption>
+      </figure>
+
+      <div class="link" aria-hidden="false">
+        <div class="link-track" id="linkTrack" aria-hidden="true">
+          <span class="link-node l"></span><span class="link-node r"></span>
+          <span class="link-badge" id="linkBadge"><span class="material">bluetooth</span></span>
+        </div>
+        <div class="link-meta">Bluetooth · watch to camera</div>
+        <output class="link-log" id="linkLog" aria-live="polite"><span class="route">Ready</span><b>Tap the red button</b></output>
+      </div>
+
+      <figure class="device device-gopro">
+        <div class="canvas-host" id="goproHost" role="img" aria-label="GoPro MISSION 1 Pro. Its screens show the settings set from the watch.">
+          <div class="loading" id="goproLoading"><span>Loading MISSION 1 Pro</span></div>
+        </div>
+        <figcaption><strong>GoPro MISSION 1 Pro <button class="flip-btn" type="button" id="flipBtn">Show front</button></strong><span>Drag to turn · its shutter and mode buttons work too</span></figcaption>
+      </figure>
+      <button class="pip-swap" type="button" id="pipSwap" aria-label="Swap the watch and the camera"><span class="material" aria-hidden="true">swap_horiz</span></button>
+    </div>
+
+
+    <div class="finish" id="finish" role="status">
+      <p>That's Overcrank. The whole camera, on your wrist.</p>
+      <a class="cta" href="https://apps.apple.com/app/id6793011580">Download on the App Store</a>
+    </div>
+  </section>
+
+  <section class="how" aria-labelledby="how-title">
+    <h2 id="how-title">What you just did</h2>
+    <div class="how-grid">
+      <div>
+        <span class="material" aria-hidden="true">bluetooth_connected</span>
+        <h3>Straight to the camera</h3>
+        <p>Apple Watch talks to the MISSION 1 Pro over Bluetooth. Record, modes and settings don't need your iPhone in the loop.</p>
+      </div>
+      <div>
+        <span class="material" aria-hidden="true">sync_alt</span>
+        <h3>It works both ways</h3>
+        <p>Press the shutter on the camera and the watch knows. Battery, card time and the record timer stream back to the wrist.</p>
+      </div>
+      <div>
+        <span class="material" aria-hidden="true">rule</span>
+        <h3>The camera's own rules</h3>
+        <p>Ask for 120 fps at 8K and the camera steps down to 4K. Overcrank shows that the moment it happens, so nothing changes behind your back.</p>
+      </div>
+    </div>
+  </section>
+  <p class="note">A browser demo of Overcrank with a simulated GoPro MISSION 1 Pro, the camera Overcrank is tested on. HERO9 and newer use the same GoPro protocol but aren't tested yet. The footage on the camera screen is sample footage.</p>
+</main>
+
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+
+const $ = (s) => document.querySelector(s);
+const now = () => performance.now();
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ProTheme (GoProKit/Theme/ProTheme.swift)
+const C = {
+  accent: "#0088ff", ground: "#000", surface: "#1a1a1a", surfaceHigh: "#242424",
+  record: "#ff3344", ok: "#00cc66", warning: "#ffb020", text2: "rgba(255,255,255,0.6)",
+};
+const SF = '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Geist", system-ui, sans-serif';
+const SF_ROUND = '"SF Pro Rounded", ui-rounded, ' + SF;
+const MONO = 'ui-monospace, "SF Mono", Menlo, monospace';
+const ICON = '"Material Symbols Rounded"';
+
+/* =====================================================================
+   The camera. Modes, per-mode settings, and the MISSION 1 Pro's format
+   coupling, as GoProKit's MockCamera emulates it.
+   ===================================================================== */
+const MODES = [
+  { id: "lowLight", title: "Low Light", icon: "bedtime", kind: "video" },
+  { id: "sloMo", title: "Slo-Mo", icon: "slow_motion_video", kind: "video" },
+  { id: "sportPOV", title: "Sport POV", icon: "directions_run", kind: "video" },
+  { id: "video", title: "Video", icon: "videocam", kind: "video" },
+  { id: "photo", title: "Photo", icon: "photo_camera", kind: "photo" },
+  { id: "lapse", title: "Lapse", icon: "timelapse", kind: "lapse" },
+];
+const MODE = Object.fromEntries(MODES.map((m) => [m.id, m]));
+const defaults = () => ({
+  lowLight: { aspect: "4:3", res: "4K", fps: 30, lens: "L" },
+  sloMo: { aspect: "16:9", res: "1080", fps: 240, lens: "W" },
+  sportPOV: { aspect: "4:3", res: "4K", fps: 60, lens: "W" },
+  video: { aspect: "16:9", res: "8K", fps: 30, lens: "W" },
+  photo: { mp: "50MP", output: "RAW", lens: "W", timer: "Off" },
+  lapse: { aspect: "16:9", res: "4K", speed: "Auto", lens: "W" },
+});
+
+// Resolution families per aspect, biggest first (MockCamera.missionResolutionFamilies).
+const RES_FAMILY = { "4:3": ["8K", "4K", "1440"], "16:9": ["8K", "4K", "1080"], "9:16": ["4K", "1080"] };
+const aspectOptions = (mode) => (mode === "sloMo" ? ["4:3", "16:9"] : ["4:3", "16:9", "9:16"]);
+const fpsOptions = (mode, aspect) => (mode === "sloMo" ? [240, 480, 960] : aspect === "9:16" ? [30, 60] : [24, 30, 60, 120, 240]);
+// How far up its family each frame rate reaches (MockCamera.missionResolutions).
+function allowedRes(aspect, fps) {
+  const family = RES_FAMILY[aspect];
+  if (fps === 960) return ["1080"];
+  let drop = 0;
+  if (fps === 120) drop = 1;
+  else if (fps === 240 || fps === 480) drop = aspect === "16:9" ? 2 : 1;
+  return family.slice(Math.min(drop, family.length - 1));
+}
+
+const PRESETS = [
+  { name: "Ski", icon: "downhill_skiing", mode: "video", s: { aspect: "4:3", res: "8K", fps: 30, lens: "W" } },
+  { name: "Surf", icon: "surfing", mode: "video", s: { aspect: "16:9", res: "4K", fps: 120, lens: "W" } },
+  { name: "MTB", icon: "directions_bike", mode: "sportPOV", s: { aspect: "16:9", res: "4K", fps: 60, lens: "W" } },
+  { name: "Moto", icon: "two_wheeler", mode: "sportPOV", s: { aspect: "4:3", res: "4K", fps: 60, lens: "L" } },
+  { name: "Vlog", icon: "person", mode: "video", s: { aspect: "9:16", res: "4K", fps: 30, lens: "L" } },
+  { name: "Night", icon: "bedtime", mode: "lowLight", s: { aspect: "4:3", res: "4K", fps: 30, lens: "L" } },
+];
+
+const cam = {};
+function resetCamera() {
+  Object.assign(cam, {
+    mode: "video", s: defaults(), recording: false, recStart: 0, battery: 78,
+    asleep: false, bootT: -1e9, photos: 0, flashT: -1e9,
+    bannerText: "", bannerIcon: "", bannerT: -1e9,
+    changedKey: "", changedT: -1e9, notice: "", noticeT: -1e9,
+  });
+}
+resetCamera();
+
+const settingsNow = () => cam.s[cam.mode];
+const kindNow = () => MODE[cam.mode].kind;
+const elapsed = () => (cam.recording ? (now() - cam.recStart) / 1000 : 0);
+const isRollingVideo = () => cam.recording && kindNow() !== "photo";
+const noticeActive = () => now() - cam.noticeT < 3600;
+
+function formatParts(mode = cam.mode) {
+  const s = cam.s[mode];
+  const k = MODE[mode].kind;
+  if (k === "photo") return [["sub", "Single"], ["mp", s.mp], ["output", s.output], ["lens", s.lens]];
+  if (k === "lapse") return [["aspect", s.aspect], ["res", s.res], ["speed", s.speed]];
+  return [["aspect", s.aspect], ["res", s.res], ["fps", String(s.fps)], ["lens", s.lens]];
+}
+const formatLine = (mode) => formatParts(mode).map((p) => p[1]).join(" | ");
+
+function clock(sec, long = false) {
+  sec = Math.floor(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  const p = (n) => String(n).padStart(2, "0");
+  if (long) return `${p(h)}:${p(m)}:${p(s)}`;
+  return h ? `${h}:${p(m)}:${p(s)}` : `${m}:${p(s)}`;
+}
+
+// Card time left on a 128 GB card, from a rough bitrate per format.
+function cardLeft() {
+  const s = settingsNow();
+  if (kindNow() === "photo") {
+    const shots = (s.mp === "50MP" ? (s.output === "RAW" ? 1420 : 2310) : 6900) - cam.photos;
+    return shots.toLocaleString("en-US");
+  }
+  const mbps = ({ "8K": 120, "4K": 100, "1440": 70, "1080": 60 }[s.res] ?? 100) * ((s.fps ?? 30) >= 120 ? 1.2 : 1);
+  let sec = (128e9 * 8) / (mbps * 1e6) - elapsed();
+  if (kindNow() === "lapse") sec *= 6;
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+  return `${h}h ${String(m).padStart(2, "0")}m`;
+}
+
+function rowsFor(mode) {
+  const s = cam.s[mode];
+  const k = MODE[mode].kind;
+  const lens = { key: "lens", label: "Digital Lens", opts: [["W", "Wide"], ["L", "Linear"]] };
+  if (k === "photo") return [
+    { key: "mp", label: "Megapixels", opts: ["50MP", "12MP"] },
+    { key: "output", label: "Output", opts: ["Standard", "RAW"] },
+    lens,
+    { key: "timer", label: "Timer", opts: ["Off", "3s", "10s"] },
+  ];
+  if (k === "lapse") return [
+    { key: "aspect", label: "Aspect Ratio", opts: ["16:9", "4:3"] },
+    { key: "res", label: "Resolution", opts: ["4K", "1080"] },
+    { key: "speed", label: "Speed", opts: ["Auto", "2x", "5x", "10x"] },
+    lens,
+  ];
+  return [
+    { key: "aspect", label: "Aspect Ratio", opts: aspectOptions(mode) },
+    { key: "res", label: "Resolution", opts: allowedRes(s.aspect, s.fps) },
+    { key: "fps", label: "Frame Rate", opts: fpsOptions(mode, s.aspect) },
+    lens,
+  ];
+}
+const optPair = (o) => (Array.isArray(o) ? o : [o, String(o)]);
+
+// A setting write, then whatever the camera changes in answer to it.
+function applySetting(key, value) {
+  const s = settingsNow();
+  const before = { ...s };
+  s[key] = value;
+  const notes = [];
+  if (kindNow() === "video") {
+    if (key === "aspect") {
+      const options = fpsOptions(cam.mode, s.aspect);
+      if (!options.includes(s.fps)) {
+        const next = options.reduce((a, b) => (Math.abs(b - s.fps) < Math.abs(a - s.fps) ? b : a));
+        notes.push(`${s.fps} → ${next} fps`);
+        s.fps = next;
+      }
+    }
+    if (key === "fps" && s.fps === 960 && s.aspect !== "16:9") {
+      notes.push(`${s.aspect} → 16:9`);
+      s.aspect = "16:9";
+    }
+    const allowed = allowedRes(s.aspect, s.fps);
+    if (!allowed.includes(s.res)) {
+      let next = allowed[0];
+      if (key === "aspect") {
+        const tier = RES_FAMILY[before.aspect].indexOf(before.res);
+        if (allowed.includes(RES_FAMILY[s.aspect][tier])) next = RES_FAMILY[s.aspect][tier];
+      }
+      notes.push(`${s.res} → ${next}`);
+      s.res = next;
+    }
+  }
+  cam.changedKey = key;
+  cam.changedT = now();
+  if (notes.length) {
+    cam.notice = "Camera changed " + notes.join(", ");
+    cam.noticeT = now();
+  }
+}
+
+function banner(text, icon) {
+  cam.bannerText = text;
+  cam.bannerIcon = icon;
+  cam.bannerT = now();
+}
+
+/* =====================================================================
+   Commands travel over the "link": watch → camera, camera → watch.
+   ===================================================================== */
+const linkTrack = $("#linkTrack");
+const linkLog = $("#linkLog");
+function pulse(direction) {
+  if (reduceMotion) return;
+  const dot = document.createElement("span");
+  dot.className = `pulse ${direction}`;
+  linkTrack.append(dot);
+  dot.addEventListener("animationend", () => dot.remove());
+  // Flare the hub as the packet crosses the middle of the line.
+  setTimeout(() => restartAnim(linkBadge, "hit"), 110);
+}
+function restartAnim(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+const linkBadge = $("#linkBadge");
+function log(route, what, ms) {
+  linkLog.innerHTML = `<span class="route">${route}</span><b>${what}</b>${ms ? `<em>${ms} ms</em>` : ""}`;
+  restartAnim(linkLog, "fresh");
+}
+
+let hapticT = -1e9;
+function apply(action, arg, source) {
+  const t = now();
+  switch (action) {
+    case "shutter":
+      if (cam.asleep) return;
+      pressPart("shutter");
+      if (kindNow() === "photo") {
+        cam.photos += 1;
+        cam.flashT = t;
+        if (source === "watch") hapticT = t;
+      } else if (cam.recording) {
+        cam.recording = false;
+      } else {
+        cam.recording = true;
+        cam.recStart = t;
+        if (source === "watch") { hapticT = t; done("rec"); }
+      }
+      break;
+    case "mode":
+      if (cam.recording || cam.asleep) return;
+      cam.mode = arg;
+      banner(MODE[arg].title, MODE[arg].icon);
+      if (arg === "sloMo") done("slomo");
+      break;
+    case "set":
+      if (cam.recording || cam.asleep) return;
+      applySetting(arg.key, arg.value);
+      done("setting");
+      break;
+    case "preset":
+      if (cam.recording || cam.asleep) return;
+      cam.mode = arg.mode;
+      Object.assign(cam.s[arg.mode], arg.s);
+      banner(`${arg.name}`, arg.icon);
+      cam.changedKey = "*";
+      cam.changedT = t;
+      done("preset");
+      break;
+    case "power":
+      if (cam.asleep) { cam.asleep = false; cam.bootT = t; }
+      else { cam.recording = false; cam.asleep = true; }
+      break;
+  }
+}
+
+function fromWatch(action, arg, label) {
+  if (navigator.vibrate) navigator.vibrate(8);
+  pulse("w2c");
+  log("Watch → Camera", label, Math.round(58 + Math.random() * 40));
+  setTimeout(() => apply(action, arg, "watch"), reduceMotion ? 0 : 230);
+}
+function fromCamera(action, arg, label) {
+  apply(action, arg, "camera");
+  pulse("c2w");
+  log("Camera → Watch", label);
+}
+
+setInterval(() => {
+  if (cam.recording && cam.battery > 9) cam.battery -= 1;
+}, 15000);
+
+/* =====================================================================
+   Tasks
+   ===================================================================== */
+const tasks = { rec: false, slomo: false, setting: false, preset: false };
+function done(key) {
+  if (tasks[key]) return;
+  tasks[key] = true;
+  document.querySelector(`[data-task="${key}"]`).classList.add("done");
+  const count = Object.values(tasks).filter(Boolean).length;
+  $("#tasksLabel").textContent = `Try this · ${count} of 4`;
+  if (count === 4) $("#finish").classList.add("is-shown");
+  markNext();
+}
+function markNext() {
+  const next = Object.keys(tasks).find((k) => !tasks[k]);
+  document.querySelectorAll("[data-task]").forEach((li) => li.classList.toggle("next", li.dataset.task === next));
+  const count = Object.values(tasks).filter(Boolean).length;
+  document.querySelectorAll(".tasks-progress i").forEach((el, i) => el.classList.toggle("on", i < count));
+}
+markNext();
+$("#resetBtn").addEventListener("click", () => {
+  for (const key of Object.keys(tasks)) tasks[key] = false;
+  document.querySelectorAll("[data-task]").forEach((li) => li.classList.remove("done"));
+  $("#tasksLabel").textContent = "Try this · 0 of 4";
+  $("#finish").classList.remove("is-shown");
+  markNext();
+  resetCamera();
+  page = "control";
+  dialog = null;
+  log("Ready", "Tap the red button");
+});
+
+/* =====================================================================
+   The watch face: Overcrank's Control, Settings, Presets and Monitor
+   pages drawn into a canvas that becomes the watch's screen texture.
+   Layout follows Watch/Views/ControlPage.swift at 422 × 514.
+   ===================================================================== */
+const W = 422, H = 514, UI_SCALE = 2;
+const ui = document.createElement("canvas");
+ui.width = W * UI_SCALE;
+ui.height = H * UI_SCALE;
+const g = ui.getContext("2d");
+
+let page = "control"; // control | settings | presets | monitor
+let dialog = null; // "power"
+let hits = [];
+let pressed = { id: "", t: -1e9 };
+let carouselX = MODES.findIndex((m) => m.id === cam.mode);
+let iconsReady = false;
+
+const isPressed = (id) => pressed.id === id && now() - pressed.t < 170;
+function hit(id, x, y, w, h, fn, enabled = true) { hits.push({ id, x, y, w, h, fn, enabled }); }
+
+function rr(c, x, y, w, h, r) { c.beginPath(); c.roundRect(x, y, w, h, r); }
+function text(c, s, x, y, font, color, align = "left") {
+  c.font = font; c.fillStyle = color; c.textAlign = align; c.textBaseline = "middle"; c.fillText(s, x, y);
+}
+function fitText(c, s, x, y, maxW, size, weight, color, family = SF, align = "left") {
+  let px = size;
+  c.font = `${weight} ${px}px ${family}`;
+  while (c.measureText(s).width > maxW && px > size * 0.7) { px -= 0.5; c.font = `${weight} ${px}px ${family}`; }
+  c.fillStyle = color; c.textAlign = align; c.textBaseline = "middle"; c.fillText(s, x, y);
+}
+function icon(c, name, x, y, size, color) {
+  if (!iconsReady) { c.fillStyle = color; c.beginPath(); c.arc(x, y, size * 0.18, 0, Math.PI * 2); c.fill(); return; }
+  c.font = `${size}px ${ICON}`; c.fillStyle = color; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(name, x, y);
+}
+function circle(c, x, y, r, color) { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fillStyle = color; c.fill(); }
+
+function batteryGlyph(c, x, y, w, h, pct, showPct, fontSize) {
+  const color = pct < 15 ? C.record : pct < 30 ? C.warning : C.ok;
+  rr(c, x, y - h / 2, w, h, h * 0.28);
+  c.lineWidth = 2; c.strokeStyle = color; c.stroke();
+  rr(c, x + 3, y - h / 2 + 3, (w - 6) * pct / 100, h - 6, h * 0.16);
+  c.fillStyle = color; c.fill();
+  rr(c, x + w + 2, y - h * 0.18, 3, h * 0.36, 1.5); c.fillStyle = color; c.fill();
+  if (showPct) text(c, `${pct}%`, x + w + 12, y + 1, `500 ${fontSize}px ${SF_ROUND}`, "#fff");
+}
+
+function systemClock(c) {
+  const d = new Date();
+  const s = `${d.getHours() % 12 || 12}:${String(d.getMinutes()).padStart(2, "0")}`;
+  text(c, s, 392, 58, `600 31px ${SF_ROUND}`, "#fff", "right");
+}
+
+function pageDots(c, active) {
+  [150, 166, 182].forEach((y, i) => circle(c, 411, y, 4.5, i === active ? "#fff" : "rgba(255,255,255,0.35)"));
+}
+
+function backButton(c, id = "back") {
+  c.globalAlpha = isPressed(id) ? 0.6 : 1;
+  circle(c, 46, 58, 24, "#2c2c2e");
+  icon(c, "chevron_left", 45, 58, 34, "#fff");
+  c.globalAlpha = 1;
+  hit(id, 14, 26, 70, 66, () => { page = "control"; });
+}
+
+function drawControl(t) {
+  const asleep = cam.asleep;
+  const rolling = isRollingVideo();
+  const y = 135;
+
+  // Status strip: link dot, format line (or REC + timer), battery.
+  circle(g, 26, y, 7, asleep ? "#5a5a5e" : "#0a84ff");
+  if (rolling) {
+    circle(g, 48, y, 6, C.record);
+    text(g, "REC", 60, y + 1, `700 22px ${SF}`, C.record);
+    text(g, clock(elapsed()), 112, y + 1, `600 24px ${SF_ROUND}`, "#fff");
+  } else {
+    let x = 44;
+    const warn = noticeActive();
+    if (warn) { icon(g, "warning", x + 10, y, 22, C.warning); x += 24; }
+    const label = asleep ? "Camera asleep" : formatLine();
+    fitText(g, label, x, y + 1, 280 - x, 24, 600, warn ? C.warning : asleep ? C.text2 : "#fff");
+  }
+  batteryGlyph(g, 284, y, 36, 19, cam.battery, true, 25);
+
+  // Battery bezel ringing the record button.
+  const cx = 211, cy = 214, R = 40;
+  // Until the first recording, a ring pulses out from the button: tap here.
+  if (!tasks.rec && !rolling && !reduceMotion) {
+    const ph = (now() % 1600) / 1600;
+    g.strokeStyle = `rgba(255, 69, 58, ${0.6 * (1 - ph)})`; g.lineWidth = 3;
+    g.beginPath(); g.arc(cx, cy, R + 26 + ph * 20, 0, Math.PI * 2); g.stroke();
+  }
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+    g.strokeStyle = rolling ? C.record : "rgba(255,255,255,0.14)";
+    g.lineWidth = 3; g.lineCap = "round";
+    g.beginPath();
+    g.moveTo(cx + Math.cos(a) * (R + 16), cy + Math.sin(a) * (R + 16));
+    g.lineTo(cx + Math.cos(a) * (R + 23), cy + Math.sin(a) * (R + 23));
+    g.stroke();
+  }
+  g.lineWidth = 7;
+  g.strokeStyle = "rgba(255,255,255,0.08)";
+  g.beginPath(); g.arc(cx, cy, R + 8, 0, Math.PI * 2); g.stroke();
+  const pct = cam.battery;
+  g.strokeStyle = pct < 15 ? C.record : pct < 30 ? C.warning : C.ok;
+  g.beginPath(); g.arc(cx, cy, R + 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(pct, 2) / 100); g.stroke();
+  g.lineCap = "butt";
+
+  // RecordButton (GoProKit/Theme/Components.swift).
+  const enabled = !asleep;
+  g.globalAlpha = (enabled ? 1 : 0.4) * (isPressed("shutter") ? 0.7 : 1);
+  const scale = isPressed("shutter") ? 0.94 : 1;
+  g.lineWidth = 3;
+  g.strokeStyle = rolling ? C.record : "rgba(255,255,255,0.25)";
+  g.beginPath(); g.arc(cx, cy, (R - 1.5) * scale, 0, Math.PI * 2); g.stroke();
+  if (rolling) {
+    const side = R * 2 * 0.42 * scale;
+    rr(g, cx - side / 2, cy - side / 2, side, side, side * 0.22); g.fillStyle = C.record; g.fill();
+  } else {
+    circle(g, cx, cy, R * 0.75 * scale, kindNow() === "photo" ? "#fff" : C.record);
+  }
+  g.globalAlpha = 1;
+  const shutterLabel = kindNow() === "photo" ? "Take photo" : rolling ? "Stop recording" : "Start recording";
+  hit("shutter", cx - 64, cy - 64, 128, 128, () => fromWatch("shutter", null, shutterLabel), enabled);
+
+  // Mode carousel — the active tile centred, solid GoPro blue.
+  const active = MODES.findIndex((m) => m.id === cam.mode);
+  carouselX += (active - carouselX) * (reduceMotion ? 1 : 0.22);
+  const tileW = 86, tileH = 70, step = 94, top = 280;
+  g.save();
+  g.beginPath(); g.rect(14, top - 2, 394, tileH + 4); g.clip();
+  MODES.forEach((m, i) => {
+    const x = 211 + (i - carouselX) * step - tileW / 2;
+    if (x > 410 || x + tileW < 12) return;
+    const on = i === active;
+    const locked = cam.recording || asleep;
+    g.globalAlpha = (locked && !on ? 0.45 : 1) * (isPressed("mode-" + m.id) ? 0.65 : 1);
+    rr(g, x, top, tileW, tileH, 16); g.fillStyle = on ? C.accent : C.surface; g.fill();
+    icon(g, m.icon, x + tileW / 2, top + tileH / 2, 34, on ? "#fff" : C.text2);
+    g.globalAlpha = 1;
+    const vx = Math.max(14, x), vw = Math.min(408, x + tileW) - vx;
+    if (vw > 20) hit("mode-" + m.id, vx, top, vw, tileH, () => { if (!on) fromWatch("mode", m.id, `Mode · ${m.title}`); }, !locked);
+  });
+  g.restore();
+
+  // Presets · Monitor · Settings · Power.
+  const buttons = [
+    { id: "presets", icon: "grid_view", tint: C.accent, fn: () => { page = "presets"; }, enabled: !asleep },
+    { id: "monitor", icon: "smart_display", tint: C.accent, fn: () => { frameCapAt = null; page = "monitor"; }, enabled: true },
+    { id: "settings", icon: "settings", tint: "#fff", fn: () => { page = "settings"; }, enabled: true },
+    asleep
+      ? { id: "power", icon: "power_settings_new", tint: C.ok, fn: () => fromWatch("power", null, "Wake camera"), enabled: true }
+      : { id: "power", icon: "power_settings_new", tint: C.record, fn: () => { dialog = "power"; }, enabled: !cam.recording },
+  ];
+  const bw = (394 - 3 * 8) / 4, by = 360, bh = 70;
+  buttons.forEach((b, i) => {
+    const x = 14 + i * (bw + 8);
+    g.globalAlpha = (b.enabled ? 1 : 0.55) * (isPressed(b.id) ? 0.7 : 1);
+    rr(g, x, by, bw, bh, 18); g.fillStyle = C.surfaceHigh; g.fill();
+    g.lineWidth = 1.5; g.strokeStyle = `rgba(255,255,255,${b.enabled ? 0.18 : 0.08})`; g.stroke();
+    icon(g, b.icon, x + bw / 2, by + bh / 2, 32, b.tint);
+    g.globalAlpha = 1;
+    hit(b.id, x, by, bw, bh, b.fn, b.enabled);
+  });
+
+  pageDots(g, 1);
+}
+
+function drawSettings(t) {
+  backButton(g);
+  const mode = MODE[cam.mode];
+  fitText(g, mode.title, 84, 59, 200, 27, 600, "#fff");
+
+  const warn = noticeActive();
+  icon(g, warn ? "warning" : mode.icon, 30, 104, 24, warn ? C.warning : C.accent);
+  fitText(g, warn ? cam.notice : formatLine(), 50, 105, 356, 21, 600, warn ? C.warning : C.accent);
+
+  let rowY = 130;
+  for (const row of rowsFor(cam.mode)) {
+    const value = settingsNow()[row.key];
+    const valueLabel = optPair(row.opts.find((o) => optPair(o)[0] === value) ?? [value, String(value)])[1];
+    const flash = cam.changedKey === row.key && t - cam.changedT < 900;
+    text(g, row.label, 18, rowY + 14, `500 20px ${SF}`, "rgba(255,255,255,0.92)");
+    text(g, valueLabel, 404, rowY + 14, `600 20px ${SF}`, flash ? "#fff" : C.accent, "right");
+
+    g.font = `600 20px ${SF}`;
+    const pairs = row.opts.map(optPair);
+    let widths = pairs.map(([, l]) => Math.max(62, g.measureText(l).width + 30));
+    const total = widths.reduce((a, b) => a + b, 0) + (pairs.length - 1) * 7;
+    if (total > 394) widths = widths.map((w) => w * (394 - (pairs.length - 1) * 7) / (total - (pairs.length - 1) * 7));
+    let x = 14;
+    pairs.forEach(([v, l], i) => {
+      const on = v === value;
+      const id = `chip-${row.key}-${v}`;
+      g.globalAlpha = isPressed(id) ? 0.65 : 1;
+      rr(g, x, rowY + 30, widths[i], 44, 22); g.fillStyle = on ? C.accent : "#2a2a2c"; g.fill();
+      text(g, l, x + widths[i] / 2, rowY + 53, `600 20px ${SF}`, on ? "#fff" : "rgba(255,255,255,0.88)", "center");
+      g.globalAlpha = 1;
+      if (!on) hit(id, x, rowY + 26, widths[i], 52, () => fromWatch("set", { key: row.key, value: v }, `${row.label} · ${l}`), !cam.recording && !cam.asleep);
+      x += widths[i] + 7;
+    });
+    rowY += 84;
+  }
+
+  if (cam.recording || cam.asleep) {
+    g.fillStyle = "rgba(0,0,0,0.86)"; g.fillRect(0, 84, W, H - 84);
+    icon(g, cam.asleep ? "power_settings_new" : "radio_button_checked", 211, 230, 40, cam.asleep ? C.text2 : C.record);
+    text(g, cam.asleep ? "Camera is asleep" : "Settings lock while recording", 211, 280, `500 21px ${SF}`, C.text2, "center");
+  }
+}
+
+function drawPresets() {
+  backButton(g);
+  text(g, "Presets", 84, 59, `600 27px ${SF}`, "#fff");
+  const cols = 2, gap = 8, tw = (394 - gap) / cols, th = 124, top = 100;
+  PRESETS.forEach((p, i) => {
+    const x = 14 + (i % cols) * (tw + gap), y = top + Math.floor(i / cols) * (th + gap);
+    const id = "preset-" + p.name;
+    g.globalAlpha = isPressed(id) ? 0.65 : 1;
+    rr(g, x, y, tw, th, 18); g.fillStyle = C.surface; g.fill();
+    icon(g, p.icon, x + 30, y + 34, 32, C.accent);
+    text(g, p.name, x + 16, y + 74, `600 22px ${SF}`, "#fff");
+    const line = `${p.s.aspect} | ${p.s.res} | ${p.s.fps} | ${p.s.lens}`;
+    fitText(g, line, x + 16, y + 102, tw - 28, 16, 500, C.text2);
+    g.globalAlpha = 1;
+    hit(id, x, y, tw, th, () => { fromWatch("preset", p, `Preset · ${p.name}`); page = "control"; }, !cam.recording && !cam.asleep);
+  });
+}
+
+// Mirrors the watch app's framing check (Watch/Views/MonitorPage.swift): one
+// still that the iPhone fetches from the camera, shown full-bleed, with a REC
+// badge while rolling and "time · tap to refresh" beneath. Tapping the frame
+// fetches a new one. Like the app, this page has no shutter: record from
+// the Control page.
+const FRAME_H = 330, FRAME_WAKE_MS = 1200;
+let frameCap = null, frameCapAt = null, frameDueAt = 0;
+function grabFrame() {
+  if (!frameCap) { frameCap = document.createElement("canvas"); frameCap.width = W; frameCap.height = FRAME_H; }
+  const fc = frameCap.getContext("2d");
+  fc.fillStyle = "#000"; fc.fillRect(0, 0, W, FRAME_H);
+  viewfinder(fc, 0, 0, W, FRAME_H, previewAspect(), settingsNow().lens, true);
+  frameCapAt = new Date();
+}
+function drawMonitor(t) {
+  if (cam.asleep) {
+    text(g, "Camera is asleep", 211, 250, `500 21px ${SF}`, C.text2, "center");
+    backButton(g);
+    return;
+  }
+  if (!frameCapAt) grabFrame();
+  if (frameDueAt && now() >= frameDueAt) { grabFrame(); frameDueAt = 0; }
+  g.globalAlpha = frameDueAt ? 0.55 : 1;
+  g.drawImage(frameCap, 0, 100);
+  g.globalAlpha = 1;
+  if (isRollingVideo()) {
+    rr(g, 211 - 64, 108, 128, 30, 15); g.fillStyle = "rgba(0,0,0,0.6)"; g.fill();
+    circle(g, 211 - 46, 123, 5, C.record);
+    text(g, `REC ${clock(elapsed())}`, 211 - 34, 124, `700 16px ${SF_ROUND}`, "#fff");
+  }
+  const caption = frameDueAt
+    ? "Waking the iPhone…"
+    : `${frameCapAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · tap to refresh`;
+  fitText(g, caption, 211, 455, 360, 17, 500, C.text2, SF, "center");
+  hit("frame", 0, 100, W, FRAME_H, () => { if (!frameDueAt) frameDueAt = now() + FRAME_WAKE_MS; });
+  backButton(g);
+}
+
+function drawPowerDialog() {
+  g.fillStyle = "rgba(0,0,0,0.92)"; g.fillRect(0, 0, W, H);
+  text(g, "Power off GoPro?", 211, 120, `600 26px ${SF}`, "#fff", "center");
+  text(g, "The camera sleeps but stays", 211, 162, `400 19px ${SF}`, C.text2, "center");
+  text(g, "reachable — power it back on", 211, 186, `400 19px ${SF}`, C.text2, "center");
+  text(g, "from here.", 211, 210, `400 19px ${SF}`, C.text2, "center");
+  const items = [
+    { id: "dlg-off", label: "Power Off", color: C.record, y: 252, fn: () => { dialog = null; fromWatch("power", null, "Power off camera"); } },
+    { id: "dlg-cancel", label: "Cancel", color: "#fff", y: 326, fn: () => { dialog = null; } },
+  ];
+  for (const b of items) {
+    g.globalAlpha = isPressed(b.id) ? 0.65 : 1;
+    rr(g, 24, b.y, 374, 62, 31); g.fillStyle = "#2c2c2e"; g.fill();
+    text(g, b.label, 211, b.y + 32, `600 22px ${SF}`, b.color, "center");
+    g.globalAlpha = 1;
+    hit(b.id, 24, b.y, 374, 62, b.fn);
+  }
+}
+
+function drawWatch(t) {
+  hits = [];
+  g.setTransform(UI_SCALE, 0, 0, UI_SCALE, 0, 0);
+  g.globalAlpha = 1;
+  g.fillStyle = "#000";
+  g.fillRect(0, 0, W, H);
+  if (page === "control") drawControl(t);
+  else if (page === "settings") drawSettings(t);
+  else if (page === "presets") drawPresets();
+  else if (page === "monitor") drawMonitor(t);
+  if (dialog === "power") { hits = []; drawPowerDialog(); }
+  systemClock(g);
+}
+
+function tapWatch(x, y) {
+  for (let i = hits.length - 1; i >= 0; i--) {
+    const h = hits[i];
+    if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) {
+      if (!h.enabled) return;
+      pressed = { id: h.id, t: now() };
+      h.fn();
+      return;
+    }
+  }
+}
+const overWatchControl = (x, y) => hits.some((h) => h.enabled && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+
+/* =====================================================================
+   Camera footage (placeholder B-roll) for the viewfinder.
+   ===================================================================== */
+const video = document.createElement("video");
+video.src = "/overcrank/rider-pov.mp4";
+video.muted = true; video.loop = true; video.playsInline = true; video.crossOrigin = "anonymous";
+video.setAttribute("playsinline", "");
+if (!reduceMotion) video.autoplay = true;
+video.addEventListener("loadeddata", () => { if (reduceMotion) video.currentTime = 3; });
+video.load();
+if (!reduceMotion) video.play().catch(() => {});
+
+const previewAspect = () => (kindNow() === "photo" ? "4:3" : settingsNow().aspect);
+
+function viewfinder(c, x, y, w, h, aspect, lens, contain = false) {
+  const ar = { "4:3": 4 / 3, "16:9": 16 / 9, "9:16": 9 / 16 }[aspect] ?? 16 / 9;
+  let dw = w, dh = h;
+  if (contain || aspect !== "16:9") {
+    if (w / h > ar) { dh = h; dw = h * ar; } else { dw = w; dh = w / ar; }
+  }
+  const dx = x + (w - dw) / 2, dy = y + (h - dh) / 2;
+  if (video.readyState >= 2) {
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const zoom = lens === "L" ? 1.22 : 1;
+    const dar = dw / dh;
+    let sw, sh;
+    if (vw / vh > dar) { sh = vh; sw = vh * dar; } else { sw = vw; sh = vw / dar; }
+    sw /= zoom; sh /= zoom;
+    c.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, dx, dy, dw, dh);
+    if (cam.mode === "lowLight") {
+      c.save(); c.globalCompositeOperation = "screen"; c.fillStyle = "rgba(60,60,80,0.35)"; c.fillRect(dx, dy, dw, dh); c.restore();
+    }
+  } else {
+    const grad = c.createLinearGradient(0, dy, 0, dy + dh);
+    grad.addColorStop(0, "#2a3442"); grad.addColorStop(1, "#11151a");
+    c.fillStyle = grad; c.fillRect(dx, dy, dw, dh);
+  }
+  return { dx, dy, dw, dh };
+}
+
+/* =====================================================================
+   The MISSION 1 Pro's two screens.
+   ===================================================================== */
+const RW = 1280, RH = 758;
+const rear = document.createElement("canvas"); rear.width = RW; rear.height = RH;
+const rc = rear.getContext("2d");
+const FW = 512;
+const front = document.createElement("canvas"); front.width = FW; front.height = FW;
+const fc = front.getContext("2d");
+
+function drawBoot(c, w, h, age, big) {
+  const a = Math.min(1, age / 300) * (age > 1100 ? Math.max(0, 1 - (age - 1100) / 400) : 1);
+  c.globalAlpha = a;
+  text(c, "MISSION 1", w / 2, h / 2 - (big ? 20 : 30), `400 ${big ? 70 : 56}px Michroma, ${SF}`, "#fff", "center");
+  text(c, "PRO", w / 2, h / 2 + (big ? 56 : 44), `700 ${big ? 40 : 40}px ${SF}`, C.accent, "center");
+  c.globalAlpha = 1;
+}
+
+function drawRear(t) {
+  const c = rc;
+  c.fillStyle = "#000"; c.fillRect(0, 0, RW, RH);
+  if (cam.asleep) return;
+  const bootAge = t - cam.bootT;
+  if (bootAge < 1500) { drawBoot(c, RW, RH, bootAge, true); return; }
+
+  viewfinder(c, 0, 0, RW, RH, previewAspect(), settingsNow().lens);
+
+  // Top HUD
+  let grad = c.createLinearGradient(0, 0, 0, 150);
+  grad.addColorStop(0, "rgba(0,0,0,0.65)"); grad.addColorStop(1, "rgba(0,0,0,0)");
+  c.fillStyle = grad; c.fillRect(0, 0, RW, 150);
+  icon(c, kindNow() === "photo" ? "photo_library" : "sd_card", 66, 60, 44, "#fff");
+  text(c, cardLeft(), 100, 62, `600 40px ${SF}`, "#fff");
+  batteryGlyph(c, RW - 220, 60, 66, 34, cam.battery, true, 40);
+
+  if (isRollingVideo()) {
+    rr(c, RW / 2 - 140, 26, 280, 70, 35); c.fillStyle = "rgba(0,0,0,0.55)"; c.fill();
+    const blink = Math.floor((t - cam.recStart) / 500) % 2 === 0;
+    circle(c, RW / 2 - 100, 61, 13, blink ? C.record : "rgba(255,51,68,0.35)");
+    text(c, clock(elapsed(), true), RW / 2 - 76, 63, `600 42px ${MONO}`, "#fff");
+    c.lineWidth = 10; c.strokeStyle = "rgba(255,51,68,0.9)"; c.strokeRect(5, 5, RW - 10, RH - 10);
+  }
+
+  if (noticeActive()) {
+    c.font = `600 34px ${SF}`;
+    const w = c.measureText(cam.notice).width + 110;
+    rr(c, RW / 2 - w / 2, 120, w, 66, 33); c.fillStyle = "rgba(0,0,0,0.72)"; c.fill();
+    icon(c, "warning", RW / 2 - w / 2 + 44, 153, 36, C.warning);
+    text(c, cam.notice, RW / 2 - w / 2 + 74, 155, `600 34px ${SF}`, C.warning);
+  }
+
+  // Bottom: mode + format line, the changed value lit GoPro blue.
+  grad = c.createLinearGradient(0, RH - 190, 0, RH);
+  grad.addColorStop(0, "rgba(0,0,0,0)"); grad.addColorStop(1, "rgba(0,0,0,0.7)");
+  c.fillStyle = grad; c.fillRect(0, RH - 190, RW, 190);
+  const parts = formatParts();
+  const lit = t - cam.changedT < 1800;
+  c.font = `650 46px ${SF}`;
+  const sep = "  |  ";
+  const sepW = c.measureText(sep).width;
+  const partsW = parts.reduce((a, [, v]) => a + c.measureText(v).width, 0) + sepW * (parts.length - 1);
+  const pillW = partsW + 150;
+  const px = RW / 2 - pillW / 2, py = RH - 122;
+  rr(c, px, py, pillW, 84, 42); c.fillStyle = "rgba(0,0,0,0.6)"; c.fill();
+  rr(c, px + 12, py + 12, 60, 60, 16); c.fillStyle = C.accent; c.fill();
+  icon(c, MODE[cam.mode].icon, px + 42, py + 42, 40, "#fff");
+  let x = px + 100;
+  parts.forEach(([key, v], i) => {
+    const on = lit && (cam.changedKey === "*" || cam.changedKey === key);
+    text(c, v, x, py + 44, `650 46px ${SF}`, on ? "#4db2ff" : "#fff");
+    x += c.measureText(v).width;
+    if (i < parts.length - 1) { text(c, sep, x, py + 44, `400 46px ${SF}`, "rgba(255,255,255,0.45)"); x += sepW; }
+  });
+
+  // Mode banner when the mode changes.
+  const bAge = t - cam.bannerT;
+  if (bAge < 1400) {
+    const a = bAge < 1000 ? 1 : 1 - (bAge - 1000) / 400;
+    c.globalAlpha = a;
+    c.fillStyle = "rgba(0,0,0,0.5)"; c.fillRect(0, 0, RW, RH);
+    icon(c, cam.bannerIcon, RW / 2, RH / 2 - 70, 110, "#fff");
+    text(c, cam.bannerText.toUpperCase(), RW / 2, RH / 2 + 50, `800 78px ${SF}`, "#fff", "center");
+    c.globalAlpha = 1;
+  }
+
+  const fAge = t - cam.flashT;
+  if (fAge < 320) { c.fillStyle = `rgba(255,255,255,${0.9 * (1 - fAge / 320)})`; c.fillRect(0, 0, RW, RH); }
+}
+
+function drawFront(t) {
+  const c = fc;
+  c.fillStyle = "#000"; c.fillRect(0, 0, FW, FW);
+  if (cam.asleep) return;
+  const bootAge = t - cam.bootT;
+  if (bootAge < 1500) { drawBoot(c, FW, FW, bootAge, false); return; }
+  icon(c, MODE[cam.mode].icon, 80, 82, 64, C.accent);
+  text(c, `${cam.battery}%`, FW - 40, 84, `600 44px ${SF_ROUND}`, "#fff", "right");
+  if (isRollingVideo()) {
+    const blink = Math.floor((t - cam.recStart) / 500) % 2 === 0;
+    circle(c, 70, 262, 20, blink ? C.record : "rgba(255,51,68,0.3)");
+    fitText(c, clock(elapsed(), true), 270, 266, 380, 92, 700, "#fff", MONO, "center");
+  } else {
+    fitText(c, MODE[cam.mode].title.toUpperCase(), FW / 2, 262, 440, 80, 800, "#fff", SF, "center");
+  }
+  fitText(c, formatLine(), FW / 2, 412, 450, 44, 600, "rgba(255,255,255,0.75)", SF, "center");
+  if (isRollingVideo()) { c.lineWidth = 12; c.strokeStyle = C.record; c.strokeRect(6, 6, FW - 12, FW - 12); }
+  const fAge = t - cam.flashT;
+  if (fAge < 320) { c.fillStyle = `rgba(255,255,255,${0.85 * (1 - fAge / 320)})`; c.fillRect(0, 0, FW, FW); }
+}
+
+/* =====================================================================
+   3D
+   ===================================================================== */
+function makeStage(host, fov) {
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  host.append(renderer.domElement);
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  const camera = new THREE.PerspectiveCamera(fov, 1, 0.01, 200);
+  const float = new THREE.Group();
+  const pose = new THREE.Group();
+  float.add(pose);
+  scene.add(float);
+  return {
+    host, renderer, scene, camera, float, pose,
+    baseYaw: 0, basePitch: 0, yaw: 0, pitch: 0, tYaw: 0, tPitch: 0,
+    lastUser: -1e9, radius: 1, fitBox: null, margin: 1.1, lift: 0,
+  };
+}
+
+function fit(dev) {
+  const w = dev.host.clientWidth, h = dev.host.clientHeight;
+  if (!w || !h) return;
+  dev.renderer.setSize(w, h, false);
+  dev.camera.aspect = w / h;
+  const vHalf = THREE.MathUtils.degToRad(dev.camera.fov / 2);
+  const hHalf = Math.atan(Math.tan(vHalf) * dev.camera.aspect);
+  const size = dev.fitBox;
+  const dist = Math.max(size.y / 2 / Math.tan(vHalf), size.x / 2 / Math.tan(hHalf)) + size.z * 0.3;
+  dev.camera.position.set(0, dev.lift * dist, dist * dev.margin);
+  dev.camera.lookAt(0, 0, 0);
+  dev.camera.near = dist * dev.margin * 0.4;
+  dev.camera.far = dist * dev.margin * 2.5;
+  dev.camera.updateProjectionMatrix();
+}
+
+const ndc = new THREE.Vector2();
+const ray = new THREE.Raycaster();
+function rayFrom(dev, e) {
+  const r = dev.renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  dev.scene.updateMatrixWorld();
+  ray.setFromCamera(ndc, dev.camera);
+  return ray;
+}
+
+function attachPointer(dev, { onTap, onHover, freeSpin }) {
+  const el = dev.renderer.domElement;
+  let st = null;
+  el.addEventListener("pointerdown", (e) => {
+    st = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: now(), moved: false, mouse: e.pointerType === "mouse" };
+    el.setPointerCapture(e.pointerId);
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (!st) { onHover?.(e); return; }
+    if (Math.hypot(e.clientX - st.x, e.clientY - st.y) > 6) st.moved = true;
+    if (st.moved) {
+      const range = freeSpin ? Infinity : 1.2;
+      dev.tYaw = clamp(dev.tYaw + (e.clientX - st.lx) * 0.009, dev.baseYaw - range, dev.baseYaw + range);
+      if (st.mouse) dev.tPitch = clamp(dev.tPitch + (e.clientY - st.ly) * 0.006, dev.basePitch - 0.55, dev.basePitch + 0.55);
+      dev.lastUser = now();
+      el.classList.add("dragging");
+    }
+    st.lx = e.clientX; st.ly = e.clientY;
+  });
+  const end = (e) => {
+    if (!st) return;
+    if (e.type === "pointerup" && !st.moved && now() - st.t < 700) onTap(e);
+    st = null;
+    el.classList.remove("dragging");
+  };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+}
+
+function updatePose(dev, t, idleReturnMs) {
+  if (t - dev.lastUser > idleReturnMs) {
+    const turns = Math.round((dev.tYaw - dev.baseYaw) / (Math.PI * 2));
+    dev.tYaw += (dev.baseYaw + turns * Math.PI * 2 - dev.tYaw) * 0.05;
+    dev.tPitch += (dev.basePitch - dev.tPitch) * 0.05;
+  }
+  const k = reduceMotion ? 1 : 0.14;
+  dev.yaw += (dev.tYaw - dev.yaw) * k;
+  dev.pitch += (dev.tPitch - dev.pitch) * k;
+  dev.pose.rotation.set(dev.pitch, dev.yaw, 0);
+  if (!reduceMotion) {
+    dev.float.position.y = Math.sin(t / 1400 + dev.phase) * dev.radius * 0.012;
+    dev.float.rotation.z = Math.sin(t / 2300 + dev.phase) * 0.012;
+  }
+}
+
+function addLights(scene, key, fill, rim, rimColor = 0xff704d, rimPos = [4, -2.5, 4]) {
+  const k = new THREE.DirectionalLight(0xfff4ea, key); k.position.set(-3, 5, 6); scene.add(k);
+  const f = new THREE.PointLight(0x18b8e8, fill, 0, 0); f.position.set(5, 1.5, -4); scene.add(f);
+  const r = new THREE.PointLight(rimColor, rim, 0, 0); r.position.set(...rimPos); scene.add(r);
+  scene.add(new THREE.AmbientLight(0x93a9c4, 0.3));
+}
+
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+
+/* ---------- watch ---------- */
+const watchDev = makeStage($("#watchHost"), 20);
+watchDev.phase = 0;
+addLights(watchDev.scene, 2.0, 2.4, 1.0);
+let watchScreen = null; // { mesh, min, max, tex, canvas, ctx }
+
+async function loadWatch() {
+  const gltf = await loader.loadAsync("/overcrank/watch/watch-ultra-web.glb");
+  const model = gltf.scene;
+  model.rotation.x = 0.6102; // same tilt as the site's hero
+  const holder = new THREE.Group();
+  holder.add(model);
+  watchDev.pose.add(holder);
+
+  model.traverse((o) => {
+    if (!o.isMesh) return;
+    o.frustumCulled = false;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    if (mats.some((m) => m?.name === "UlFjqascpPnJnyb")) watchScreen = { mesh: o, material: o.material };
+  });
+
+  watchDev.scene.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(holder);
+  model.position.sub(box.getCenter(new THREE.Vector3()));
+  watchDev.scene.updateMatrixWorld(true);
+  const size = new THREE.Box3().setFromObject(holder).getSize(new THREE.Vector3());
+  holder.scale.setScalar(3.85 / size.y);
+
+  // Face-on by default; dragging still turns it.
+  watchDev.baseYaw = watchDev.tYaw = watchDev.yaw = 0;
+  watchDev.basePitch = watchDev.tPitch = watchDev.pitch = 0;
+  watchDev.pose.rotation.set(watchDev.pitch, watchDev.yaw, 0);
+  watchDev.scene.updateMatrixWorld(true);
+  watchDev.fitBox = new THREE.Box3().setFromObject(watchDev.pose).getSize(new THREE.Vector3());
+  watchDev.radius = 2;
+  watchDev.margin = 0.88;
+
+  if (watchScreen) {
+    const uv = watchScreen.mesh.geometry.getAttribute("uv");
+    const min = new THREE.Vector2(Infinity, Infinity), max = new THREE.Vector2(-Infinity, -Infinity);
+    for (let i = 0; i < uv.count; i++) {
+      min.x = Math.min(min.x, uv.getX(i)); min.y = Math.min(min.y, uv.getY(i));
+      max.x = Math.max(max.x, uv.getX(i)); max.y = Math.max(max.y, uv.getY(i));
+    }
+    // Size the texture so the UI's own pixels land 1:1 inside the UV rect.
+    const size = Math.min(4096, THREE.MathUtils.ceilPowerOfTwo(Math.ceil(Math.max(ui.width / (max.x - min.x), ui.height / (max.y - min.y)))));
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = watchDev.renderer.capabilities.getMaxAnisotropy();
+    const m = watchScreen.material;
+    m.map = null;
+    m.color.set(0x000000);
+    m.emissive.set(0xffffff);
+    m.emissiveMap = tex;
+    m.emissiveIntensity = 1;
+    m.toneMapped = false;
+    m.needsUpdate = true;
+    Object.assign(watchScreen, { min, max, tex, canvas, ctx, size });
+  }
+
+  attachPointer(watchDev, {
+    freeSpin: false,
+    onTap(e) {
+      const p = watchUiPoint(e);
+      if (p) { tapWatch(p.x, p.y); watchDirty = true; }
+    },
+    onHover(e) {
+      const p = watchUiPoint(e);
+      watchDev.renderer.domElement.classList.toggle("over-control", !!p && overWatchControl(p.x, p.y));
+    },
+  });
+}
+
+function watchUiPoint(e) {
+  if (!watchScreen?.min) return null;
+  const hitsOnScreen = rayFrom(watchDev, e).intersectObject(watchScreen.mesh, false);
+  if (!hitsOnScreen.length || !hitsOnScreen[0].uv) return null;
+  const { uv } = hitsOnScreen[0];
+  const { min, max } = watchScreen;
+  return { x: ((uv.x - min.x) / (max.x - min.x)) * W, y: ((max.y - uv.y) / (max.y - min.y)) * H };
+}
+
+let watchDirty = true;
+let lastWatchDraw = 0;
+function blitWatch(t) {
+  drawWatch(t);
+  if (!watchScreen?.ctx) return;
+  const { ctx, size, min, max, tex } = watchScreen;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, size, size);
+  ctx.drawImage(ui, min.x * size, (1 - max.y) * size, (max.x - min.x) * size, (max.y - min.y) * size);
+  tex.needsUpdate = true;
+}
+
+/* ---------- MISSION 1 Pro ---------- */
+const goDev = makeStage($("#goproHost"), 22);
+goDev.phase = 1.7;
+addLights(goDev.scene, 1.8, 1.5, 1.6, 0xdfe9ff, [-2, 4, -6]);
+const goParts = { shutter: [], mode: [], led: null, rear: null, front: null };
+// GLTFLoader sanitizes node names: spaces become "_", and "/" and "." go.
+const partName = (o) => o.name.replace(/_+/g, " ");
+const isShutter = (n) => n.startsWith("Shutter") && !n.includes("gasket");
+const isModeButton = (n) => /^Mode ?power button$|^MODE embossed legend$|^Power icon/.test(n);
+const press = { shutter: -1e9, mode: -1e9 };
+function pressPart(name) { press[name] = now(); }
+
+function screenMaterial(mesh, canvas) {
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  // Blender exported both panels with V running top-down.
+  tex.flipY = false;
+  tex.anisotropy = 8;
+  const m = mesh.material.clone();
+  m.color = new THREE.Color(0x000000);
+  m.emissive = new THREE.Color(0xffffff);
+  m.emissiveMap = tex;
+  m.emissiveIntensity = 1;
+  m.toneMapped = false;
+  m.roughness = 0.12;
+  // The panel sits 0.06 mm proud of the opaque cover glass; offset it so
+  // the depth buffer never lets the glass win.
+  m.polygonOffset = true;
+  m.polygonOffsetFactor = -4;
+  m.polygonOffsetUnits = -4;
+  mesh.material = m;
+  return tex;
+}
+
+async function loadGoPro() {
+  const gltf = await loader.loadAsync("assets/mission-1-pro.glb");
+  const model = gltf.scene;
+  const holder = new THREE.Group();
+  holder.add(model);
+  goDev.pose.add(holder);
+
+  model.traverse((o) => {
+    if (!o.isMesh) return;
+    const n = partName(o);
+    if (isShutter(n)) goParts.shutter.push({ o, y: o.position.y });
+    if (isModeButton(n)) goParts.mode.push({ o, x: o.position.x });
+    if (o.material?.name === "Recording LED") goParts.led = o.material;
+    // The export lost the shell's procedural graphite and wrote plain white.
+    if (o.material?.name?.startsWith("Shell")) { o.material.color.set("#1a1c1f"); o.material.roughness = 0.48; o.material.metalness = 0; o.material.envMap = goDev.scene.environment; o.material.envMapIntensity = 0.6; }
+    // Other body plastics are near-black already, but the room environment lifts them to grey.
+    { const dark = { "Battery door": "#101113", "Lens hood": "#16171a", "Controls": "#0e0f11", "Optical module": "#141518" }; const k = Object.keys(dark).find((s) => o.material?.name?.startsWith(s)); if (k) { o.material.color.set(dark[k]); o.material.envMap = goDev.scene.environment; o.material.envMapIntensity = 0.5; } }
+    if (n.startsWith("Rear OLED")) goParts.rear = { mesh: o, tex: screenMaterial(o, rear) };
+    if (n.startsWith("Front LCD")) goParts.front = { mesh: o, tex: screenMaterial(o, front) };
+  });
+
+  goDev.scene.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(holder);
+  model.position.sub(box.getCenter(new THREE.Vector3()));
+  goDev.scene.updateMatrixWorld(true);
+  const size = new THREE.Box3().setFromObject(holder).getSize(new THREE.Vector3());
+  holder.scale.setScalar(3.4 / Math.max(size.x, size.y, size.z));
+
+  // Rear screen square to the viewer by default; dragging still turns it.
+  goDev.baseYaw = goDev.tYaw = goDev.yaw = Math.PI;
+  goDev.basePitch = goDev.tPitch = goDev.pitch = 0;
+  goDev.pose.rotation.set(goDev.pitch, goDev.yaw, 0);
+  goDev.scene.updateMatrixWorld(true);
+  const s = new THREE.Box3().setFromObject(holder).getBoundingSphere(new THREE.Sphere()).radius;
+  goDev.fitBox = new THREE.Vector3(s * 1.6, s * 1.3, s * 0.5);
+  goDev.radius = s;
+  // Face-on, the body fills far more of its box than the old three-quarter
+  // view did; pull back so it sits at about the watch case's height.
+  goDev.margin = 1.1;
+
+  attachPointer(goDev, {
+    freeSpin: true,
+    onTap(e) {
+      const part = goproPartAt(e);
+      if (part === "shutter") fromCamera("shutter", null, isRollingVideo() ? "Recording stopped" : kindNow() === "photo" ? "Photo taken" : "Recording started");
+      if (part === "mode" && !cam.recording && !cam.asleep) {
+        pressPart("mode");
+        const i = MODES.findIndex((m) => m.id === cam.mode);
+        const next = MODES[(i + 1) % MODES.length];
+        fromCamera("mode", next.id, `Mode · ${next.title}`);
+      }
+    },
+    onHover(e) {
+      goDev.renderer.domElement.classList.toggle("over-control", !!goproPartAt(e));
+    },
+  });
+}
+
+function goproPartAt(e) {
+  const list = rayFrom(goDev, e).intersectObject(goDev.pose, true);
+  const first = list.find((h) => !/glass/i.test(h.object.name) && h.object.visible);
+  if (!first) return null;
+  const n = partName(first.object);
+  if (isShutter(n)) return "shutter";
+  if (isModeButton(n)) return "mode";
+  return null;
+}
+
+$("#pipSwap").addEventListener("click", () => $(".stage").classList.toggle("swapped"));
+
+const flipBtn = $("#flipBtn");
+flipBtn.addEventListener("click", () => {
+  const showingRear = flipBtn.textContent === "Show front";
+  goDev.baseYaw = showingRear ? 0 : Math.PI;
+  const turns = Math.round((goDev.tYaw - goDev.baseYaw) / (Math.PI * 2));
+  goDev.tYaw = goDev.baseYaw + turns * Math.PI * 2;
+  goDev.tPitch = goDev.basePitch;
+  goDev.lastUser = -1e9;
+  flipBtn.textContent = showingRear ? "Show rear" : "Show front";
+});
+
+/* ---------- keyboard / assistive controls ---------- */
+document.querySelectorAll("[data-kbd]").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.kbd;
+  if (k === "shutter") fromWatch("shutter", null, isRollingVideo() ? "Stop recording" : "Start recording");
+  if (k === "mode") { const i = MODES.findIndex((m) => m.id === cam.mode); const m = MODES[(i + 1) % MODES.length]; fromWatch("mode", m.id, `Mode · ${m.title}`); }
+  if (k === "settings") page = page === "settings" ? "control" : "settings";
+  if (k === "power") fromWatch("power", null, cam.asleep ? "Wake camera" : "Power off camera");
+}));
+
+/* ---------- loop ---------- */
+let lastGo = 0;
+let running = { watch: false, gopro: false };
+function tick() {
+  requestAnimationFrame(tick);
+  const t = now();
+
+  if (running.watch) {
+    updatePose(watchDev, t, 3500);
+    const hAge = t - hapticT;
+    if (hAge < 220 && !reduceMotion) watchDev.float.rotation.z += Math.sin(hAge * 0.35) * 0.012 * (1 - hAge / 220);
+    const animating = page === "monitor" || (page === "control" && !tasks.rec && !reduceMotion) || Math.abs(carouselX - MODES.findIndex((m) => m.id === cam.mode)) > 0.002 || t - pressed.t < 200 || t - cam.changedT < 1000;
+    if (watchDirty || (animating && t - lastWatchDraw > 33) || t - lastWatchDraw > 250) {
+      blitWatch(t);
+      watchDirty = false;
+      lastWatchDraw = t;
+    }
+    watchDev.renderer.render(watchDev.scene, watchDev.camera);
+  }
+
+  if (running.gopro) {
+    updatePose(goDev, t, 6000);
+    if (t - lastGo > 33) {
+      drawRear(t); drawFront(t);
+      if (goParts.rear) goParts.rear.tex.needsUpdate = true;
+      if (goParts.front) goParts.front.tex.needsUpdate = true;
+      lastGo = t;
+    }
+    const sp = Math.sin(Math.min(1, (t - press.shutter) / 220) * Math.PI);
+    for (const p of goParts.shutter) p.o.position.y = p.y - 0.0009 * sp;
+    const mp = Math.sin(Math.min(1, (t - press.mode) / 220) * Math.PI);
+    for (const p of goParts.mode) p.o.position.x = p.x - 0.0007 * mp;
+    if (goParts.led) {
+      const on = isRollingVideo() && Math.floor((t - cam.recStart) / 500) % 2 === 0;
+      goParts.led.emissiveIntensity = cam.asleep ? 0 : on ? 14 : 0.25;
+    }
+    goDev.renderer.render(goDev.scene, goDev.camera);
+  }
+}
+
+function ready(dev, loadingEl) {
+  fit(dev);
+  new ResizeObserver(() => fit(dev)).observe(dev.host);
+  dev.renderer.domElement.classList.add("is-ready");
+  loadingEl.classList.add("is-hidden");
+}
+
+document.fonts.load(`48px ${ICON}`, "videocam").then(() => { iconsReady = document.fonts.check(`48px ${ICON}`, "videocam"); watchDirty = true; });
+
+loadWatch().then(() => { running.watch = true; ready(watchDev, $("#watchLoading")); })
+  .catch((err) => { console.error(err); $("#watchLoading span").textContent = "Couldn't load the watch"; });
+loadGoPro().then(() => { running.gopro = true; ready(goDev, $("#goproLoading")); })
+  .catch((err) => { console.error(err); $("#goproLoading span").textContent = "Couldn't load the camera"; });
+requestAnimationFrame(tick);
+
+// Hooks for checking the build from the console.
+window.__demo = { cam, watchDev, goDev, goParts, rear, front, video, watchUiPoint, setPage: (p) => { page = p; watchDirty = true; }, tapWatch, fromWatch };
+</script>
+</body>
+</html>
