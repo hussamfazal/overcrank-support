@@ -27,7 +27,7 @@
     "isDynamicEntry": true
   },
   "app/demo/interactive-demo.tsx": {
-    "file": "assets/interactive-demo-BL12pQsF.js",
+    "file": "assets/interactive-demo-DQ-NISF0.js",
     "name": "interactive-demo",
     "src": "app/demo/interactive-demo.tsx",
     "isDynamicEntry": true,
@@ -54,7 +54,7 @@
     ]
   },
   "app/guides/tutorial-video.tsx": {
-    "file": "assets/tutorial-video-CNTMnTWZ.js",
+    "file": "assets/tutorial-video-C1vMpDdp.js",
     "name": "tutorial-video",
     "src": "app/guides/tutorial-video.tsx",
     "isDynamicEntry": true,
@@ -74,7 +74,7 @@
     ]
   },
   "node_modules/vinext/dist/shims/layout-segment-context.js": {
-    "file": "assets/layout-segment-context-D9ILnT2-.js",
+    "file": "assets/layout-segment-context-NU0jyHaz.js",
     "name": "layout-segment-context",
     "src": "node_modules/vinext/dist/shims/layout-segment-context.js",
     "isDynamicEntry": true,
@@ -85,7 +85,7 @@
     ]
   },
   "virtual:vinext-app-browser-entry": {
-    "file": "assets/index-sZC_wiee.js",
+    "file": "assets/index-C7ymCcbR.js",
     "name": "index",
     "src": "virtual:vinext-app-browser-entry",
     "isEntry": true,
