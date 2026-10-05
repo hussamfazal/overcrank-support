@@ -69,4 +69,21 @@
     <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-status.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-check-framing.webp</image:loc></image:image>
   </url>
+  <url>
+    <loc>https://overcrank.ca/guides/gopro-quik-apple-watch/</loc>
+    <lastmod>2026-10-05</lastmod>
+    <image:image><image:loc>https://overcrank.ca/guides/apple-watch-find-gopro.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://overcrank.ca/guides/apple-watch-ultra-gopro/</loc>
+    <lastmod>2026-10-05</lastmod>
+    <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-lens-image-tuning.webp</image:loc></image:image>
+    <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-status.webp</image:loc></image:image>
+    <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-ev-comp.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://overcrank.ca/guides/mission-1-pro-firmware-update/</loc>
+    <lastmod>2026-10-05</lastmod>
+    <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-status.webp</image:loc></image:image>
+  </url>
 </urlset>
