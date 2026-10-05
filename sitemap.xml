@@ -10,11 +10,11 @@
   </url>
   <url>
     <loc>https://overcrank.ca/guides/</loc>
-    <lastmod>2026-09-28</lastmod>
+    <lastmod>2026-10-05</lastmod>
   </url>
   <url>
     <loc>https://overcrank.ca/guides/control-gopro-with-apple-watch/</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-10-03</lastmod>
     <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-recording.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/apple-watch-find-gopro.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-rec-screen.webp</image:loc></image:image>
@@ -23,19 +23,19 @@
   </url>
   <url>
     <loc>https://overcrank.ca/guides/gopro-apple-watch-app/</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-10-03</lastmod>
     <image:image><image:loc>https://overcrank.ca/guides/apple-watch-find-gopro.webp</image:loc></image:image>
   </url>
   <url>
     <loc>https://overcrank.ca/guides/mission-1-pro-settings/</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-lens-image-tuning.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-gp-log2.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-ev-comp.webp</image:loc></image:image>
   </url>
   <url>
     <loc>https://overcrank.ca/guides/mission-1-pro-log-settings/</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-10-bit.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-bit-rate-max.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-gp-log2.webp</image:loc></image:image>
@@ -43,7 +43,7 @@
   </url>
   <url>
     <loc>https://overcrank.ca/guides/mission-1-pro-settings-that-change/</loc>
-    <lastmod>2026-09-27</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-auto-boost-sequence.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-auto-boost-frame-rate.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/mission-1-pro-8-bit-changes-log.webp</image:loc></image:image>
@@ -53,13 +53,20 @@
   </url>
   <url>
     <loc>https://overcrank.ca/guides/gopro-remote-options/</loc>
-    <lastmod>2026-09-28</lastmod>
+    <lastmod>2026-10-05</lastmod>
     <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-recording.webp</image:loc></image:image>
   </url>
   <url>
     <loc>https://overcrank.ca/guides/apple-watch-camera-remote-gopro/</loc>
-    <lastmod>2026-09-28</lastmod>
+    <lastmod>2026-10-03</lastmod>
     <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-rec-screen.webp</image:loc></image:image>
     <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-status.webp</image:loc></image:image>
+  </url>
+  <url>
+    <loc>https://overcrank.ca/guides/mission-1-pro-remote/</loc>
+    <lastmod>2026-10-05</lastmod>
+    <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-recording.webp</image:loc></image:image>
+    <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-status.webp</image:loc></image:image>
+    <image:image><image:loc>https://overcrank.ca/guides/apple-watch-gopro-check-framing.webp</image:loc></image:image>
   </url>
 </urlset>
